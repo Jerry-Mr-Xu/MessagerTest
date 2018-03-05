@@ -4,12 +4,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -17,6 +19,8 @@ import android.widget.Button;
  * 客户端
  */
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
+
     private Messenger messenger = null;
 
     @Override
@@ -33,8 +37,10 @@ public class MainActivity extends AppCompatActivity {
                     newMessage.what = 100;
 
                     Bundle data = new Bundle();
-                    data.putString("msg", "Hello this is client");
+                    data.putString("msg", "Hello this is client!");
                     newMessage.setData(data);
+
+                    newMessage.replyTo = client;
                     try {
                         messenger.send(newMessage);
                     } catch (RemoteException e) {
@@ -46,6 +52,19 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = new Intent(this, MainServer.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    private Messenger client = new Messenger(new MessengerHandler());
+
+    private class MessengerHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 100:
+                    Log.i(TAG, "handleMessage: " + msg.getData().getString("msg"));
+                    break;
+            }
+        }
     }
 
     private ServiceConnection connection = new ServiceConnection() {
